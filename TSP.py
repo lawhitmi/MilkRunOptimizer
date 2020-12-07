@@ -2,16 +2,8 @@ from __future__ import print_function
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import pandas as pd
+from TransportOrder import Order
 
-# Transport Order Class
-class Order():
-    def __init__(self,order_num,origin,destination,weight,length,volume):
-        self.order_num = order_num
-        self.origin = origin
-        self.destination = destination
-        self.weight = weight
-        self.length = length
-        self.volume = volume
 
 def print_solution(manager, routing, solution):
     """Prints solution on console."""
