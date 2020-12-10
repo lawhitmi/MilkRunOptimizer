@@ -7,22 +7,32 @@ from helper_funcs import getTOlist
 def print_solution(data, manager, routing, solution):
     """Prints solution on console."""
     total_distance = 0
+    total_load = 0
     for vehicle_id in range(data['num_vehicles']):
         index = routing.Start(vehicle_id)
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
         route_distance = 0
+        route_load = 0
         while not routing.IsEnd(index):
-            plan_output += ' {} -> '.format(manager.IndexToNode(index))
+            node_index = manager.IndexToNode(index)
+            route_load += data['demands'][node_index]
+            plan_output += ' {0} Load({1}) -> '.format(node_index, route_load)
             previous_index = index
             index = solution.Value(routing.NextVar(index))
             route_distance += routing.GetArcCostForVehicle(
                 previous_index, index, vehicle_id)
-        plan_output += '{}\n'.format(manager.IndexToNode(index))
+        plan_output += ' {0} Load({1})\n'.format(manager.IndexToNode(index),
+                                                 route_load)
         plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+        plan_output += 'Load of the route: {}\n'.format(route_load)
         print(plan_output)
         total_distance += route_distance
-    print('Total Distance of all routes: {}m'.format(total_distance))
+        total_load += route_load
+    print('Total distance of all routes: {}m'.format(total_distance))
+    print('Total load of all routes: {}'.format(total_load))
 
+
+# Callback functions (translate internal to external indices)
 def distance_callback(from_index, to_index):
         """Returns the manhattan distance between the two nodes."""
         # Convert from routing variable Index to distance matrix NodeIndex.
@@ -54,9 +64,9 @@ data['pickups_deliveries'] = []
 for i in TO_list:
     data['pickups_deliveries'].append([i.origin,i.destination])
 
-data['num_vehicles'] = 15
+data['num_vehicles'] = 5
 data['depot']=5 #set starting point for all vehicles
-data['demands']= [15000, 20000, 10000]
+data['demands']= [15000, 20000, 10000, 0, 0, 0]
 data['vehicle_capacities']= [25000]*data['num_vehicles'] # length must match num_vehicles
 
 manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
@@ -65,6 +75,7 @@ manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
 routing = pywrapcp.RoutingModel(manager)
 
 transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
 
 # This sets the cost of travel between any two locations (this is where our tariff information will
 # eventually go)
@@ -75,7 +86,7 @@ routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 # For example, if the vehicles have different speeds, you could define the cost of travel between 
 # locations to be the distance divided by the vehicle's speed—in other words, the travel time
 
-demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+
 
 routing.AddDimension(
     transit_callback_index,
@@ -84,7 +95,7 @@ routing.AddDimension(
     True,  # start cumul to zero
     'Distance')
 
-routing.AddDimensionWithVehicleCapacity(
+routing.AddDimensionWithVehicleTransitAndCapacity(
     demand_callback_index,
     0,  # null capacity slack
     data['vehicle_capacities'],  # vehicle maximum capacities
@@ -116,8 +127,13 @@ for request in data['pickups_deliveries']:
 search_parameters = pywrapcp.DefaultRoutingSearchParameters()
 search_parameters.first_solution_strategy = (
     routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION)
+search_parameters.local_search_metaheuristic = (
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+search_parameters.time_limit.FromSeconds(10)
 
 solution = routing.SolveWithParameters(search_parameters)
 
 if solution:
         print_solution(data, manager, routing, solution)
+else:
+    print("No solution.")
