@@ -2,41 +2,37 @@
 
 from pyomo.environ import *
 import pandas as pd
-from helper_funcs import getTOlist
+from helper_funcs import *
+import numpy as np
+from MoT import MoT
+from Milkrun import Milkrun
 
-data={}
+data = {'distance_matrix': np.array([
+    [0, 170, 210, 2219, 1444, 2428],  # Nuremberg
+    [170, 0, 243, 2253, 1369, 2354],  # Munich
+    [210, 243, 0, 2042, 1267, 2250],  # Stuttgart
+    [2219, 2253, 2042, 0, 1127, 579],  # Supplier Porto
+    [1444, 1369, 1267, 1127, 0, 996]  # Supplier Barcelona
+])}
 
-data['distance_matrix'] = [
-    [0,170,210,2219,1444,2428], # Nuremburg
-    [170,0,243,2253,1369,2354], # Munich
-    [210,243,0,2042,1267,2250], # Stuttgart
-    [2219,2253,2042,0,1127,579], # Supplier Porto
-    [1444,1369,1267,1127,0,996], # Supplier Barcelona
-    [2428,2354,2250,579,996,0] # Depot Seville (this may not be needed)
-]
-
-
-TO_list = getTOlist()
+TO_list = get_to_list()
 
 data['pickups_deliveries'] = []
 for i in TO_list:
-    data['pickups_deliveries'].append([i.origin,i.destination])
-
-data['no_vehicles'] = 5
+    data['pickups_deliveries'].append([i.origin, i.destination])
 
 model = ConcreteModel()
 
 # Sets
-places = list(range(len(data['distance_matrix'])))
-vehicles = list(range(data['no_vehicles']))
-
+tariffs = list(range(1, 1 + len(TO_list)))
 
 # Variables
 model.x = Var(
-        places, places, vehicles,
-        within=Binary,
-        doc="1 if route from i-th to j-th place taken by k-th vehicle, 0 otherwise"
-    )
+    tariffs, [1, 2],
+    within=Binary,
+    doc="TO utilizes LTL if (i,1) is 1 or FTL if (i,2) is 1"
+)
+
 
 # Constraints
 
@@ -44,92 +40,65 @@ model.x = Var(
 # Objective
 
 def cost_func(mdl):
-    dist = 0
-    for i in places:
-        for j in places:
-            if j != i:
-                for k in vehicles:
-                    if mdl.x[i,j,k] == 1:
-                        dist+=data['distance_matrix'][i][j]
-    return dist
+    cost = 0
+    for i in range(1, 1 + len(TO_list)):
+        cost += mdl.x[i, 1] * get_tariff_dist(data['distance_matrix'][tuple(data['pickups_deliveries'][i - 1])],
+                                              TO_list[i - 1].weight) + mdl.x[i, 2] * get_tariff_ftl(
+            data['distance_matrix'][tuple(data['pickups_deliveries'][i - 1])])
+    return cost
+
+
+def cost_to(to, ltl, ftl):
+    return ltl * get_tariff_dist(data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])],
+                                 TO_list[to - 1].weight) + ftl * get_tariff_ftl(
+        data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])])
+
 
 model.Cost = Objective(rule=cost_func, sense=minimize)
 
+model.Constraint1 = ConstraintList()
+for i in range(1, 1 + len(TO_list)):
+    model.Constraint1.add(expr=model.x[i, 1] + model.x[i, 2] >= 1)
+
 # Solve
 
-results = SolverFactory('glpk').solve(model)
+instance = model.create_instance()
+results = SolverFactory('glpk').solve(instance)
 results.write()
+instance.display()
+instance.solutions.load_from(results)
 
-# Constraints
+a = MoT('Standard 25to', 50, 25000, 13.6, 2.5, 2.48)
+b = MoT('MEGA', 70, 25000, 13.62, 2.48, 3)
+c = MoT('PICKUP 3.5t', 60, 3500, 6.4, 2.5, 2.5)
 
-# Demand = {
-#    'Lon':   125,        # London
-#    'Ber':   175,        # Berlin
-#    'Maa':   225,        # Maastricht
-#    'Ams':   250,        # Amsterdam
-#    'Utr':   225,        # Utrecht
-#    'Hag':   200         # The Hague
-# }
-
-# Supply = {
-#    'Arn':   600,        # Arnhem
-#    'Gou':   650         # Gouda
-# }
-
-# T = {
-#     ('Lon','Arn'): 1000,
-#     ('Lon','Gou'): 2.5,
-#     ('Ber','Arn'): 2.5,
-#     ('Ber','Gou'): 1000,
-#     ('Maa','Arn'): 1.6,
-#     ('Maa','Gou'): 2.0,
-#     ('Ams','Arn'): 1.4,
-#     ('Ams','Gou'): 1.0,
-#     ('Utr','Arn'): 0.8,
-#     ('Utr','Gou'): 1.0,
-#     ('Hag','Arn'): 1.4,
-#     ('Hag','Gou'): 0.8
-# }
-
-# # Step 0: Create an instance of the model
-# model = ConcreteModel()
-# model.dual = Suffix(direction=Suffix.IMPORT)
-
-# # Step 1: Define index sets
-# CUS = list(Demand.keys())
-# SRC = list(Supply.keys())
-
-# # Step 2: Define the decision 
-# model.x = Var(CUS, SRC, domain = NonNegativeReals)
-
-# # Step 3: Define Objective
-# model.Cost = Objective(
-#     expr = sum([T[c,s]*model.x[c,s] for c in CUS for s in SRC]),
-#     sense = minimize)
-
-# # Step 4: Constraints
-# model.src = ConstraintList()
-# for s in SRC:
-#     model.src.add(sum([model.x[c,s] for c in CUS]) <= Supply[s])
-        
-# model.dmd = ConstraintList()
-# for c in CUS:
-#     model.dmd.add(sum([model.x[c,s] for s in SRC]) == Demand[c])
-    
-# results = SolverFactory('glpk').solve(model)
-# results.write()
+tos = pd.DataFrame({"transportOrder": [to.order_num for to in TO_list], "origin": [to.origin for to in TO_list],
+                    "destination": [to.destination for to in TO_list], "weight": [to.weight for to in TO_list],
+                    "length": [to.length for to in TO_list], "volume": [to.volume for to in TO_list],
+                    "cost": [cost_to(to, instance.x[(to, 1)].value, instance.x[(to, 2)].value) for to in
+                             range(1, 1 + len(TO_list))], "milkrun": False, "considered": False})
+tos = tos.sort_values(by=["cost"], ascending=False)
+milkrun_list = []
 
 
-# for c in CUS:
-#     for s in SRC:
-#         print(c, s, model.x[c,s]())
+def find_to(to_name):
+    for to in TO_list:
+        if to.order_num == to_name:
+            return to
 
-# if 'ok' == str(results.Solver.status):
-#     print("Total Shipping Costs = ",model.Cost())
-#     print("\nShipping Table:")
-#     for s in SRC:
-#         for c in CUS:
-#             if model.x[c,s]() > 0:
-#                 print("Ship from ", s," to ", c, ":", model.x[c,s]())
-# else:
-#     print("No Valid Solution Found")
+
+while len(tos[~tos["considered"]].index) > 0:
+    to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
+    tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][0]), "considered"] = True
+    new_milkrun = Milkrun(find_to(to_consider["transportOrder"][0]))
+    while True:
+        to_add = tos.query('~milkrun and ~considered and (origin == ' + str(to_consider["origin"][0])
+                           + ' or destination == '
+                           + str(to_consider["destination"][0])
+                           + ') and weight < '
+                           + str(b.max_payload - new_milkrun.total_weight())
+                           + ' and length < '
+                           + str(b.max_length - new_milkrun.total_length())
+                           + ' and volume <'
+                           + str(b.max_vol - new_milkrun.total_volume()))
+
