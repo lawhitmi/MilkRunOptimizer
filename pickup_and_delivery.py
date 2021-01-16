@@ -1,7 +1,7 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import pandas as pd
-from TransportOrder import Order
+from helper_funcs import getTOlist
 
 
 def print_solution(data, manager, routing, solution):
@@ -30,22 +30,7 @@ def distance_callback(from_index, to_index):
         to_node = manager.IndexToNode(to_index)
         return data['distance_matrix'][from_node][to_node]
 
-TOs = pd.read_csv("./Data/TransportOrders.csv")
-
-TOs['Weight'] = pd.to_numeric(TOs['Weight'].str.rstrip(' kg').str.replace(',',''))
-TOs['Loading Meters'] = pd.to_numeric(TOs['Loading Meters'].str.split(expand=True)[0])
-TOs['Volume'] = pd.to_numeric(TOs['Volume'].str.split(expand=True)[0])
-
-
-TO_list = []
-for index, row in TOs.iterrows():
-    TO_list.append(Order(row['Transport Order'], 
-                         row['Origin Index'], 
-                         row['Destination Index'], 
-                         row['Weight'], 
-                         row['Loading Meters'], 
-                         row['Volume'])
-                  )
+TO_list = getTOlist()
 
 data = {}
 #Define Distance Matrix
@@ -105,3 +90,5 @@ solution = routing.SolveWithParameters(search_parameters)
 
 if solution:
         print_solution(data, manager, routing, solution)
+else:
+    print("No solution.")
