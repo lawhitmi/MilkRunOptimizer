@@ -77,3 +77,10 @@ def get_tariff_milk(dist, num_stops):
     distance_rate = 0.6
     stop_cost = 40
     return transport_cost + distance_rate * dist + num_stops * stop_cost
+
+# Running the script runs tests on the functions
+if __name__ == "__main__":
+    assert round(get_tariff(800),0) == 1296
+    assert round(get_tariff_dist(800,50),2) == 57.56
+    assert round(get_tariff_ftl(250),0) == 100
+    assert round(get_tariff_milk(250,2),0) == 330

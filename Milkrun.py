@@ -2,7 +2,7 @@ class Milkrun:
     def __init__(self, to):
         self.TOs_covered = [to]
         self.origins = {to.origin}
-        self.destinations = {to.destinations}
+        self.destinations = {to.destination}
         self.type = "neither"
 
     def number_of_tos(self):
