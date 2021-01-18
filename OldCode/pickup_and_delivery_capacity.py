@@ -52,21 +52,27 @@ data = {}
 #Define Distance Matrix
 # Note that a 6th location was added here as the 'depot' from which the trucks leave and return
 data['distance_matrix'] = [
-    [0,170,210,2219,1444,2428], #Nuremburg
-    [170,0,243,2253,1369,2354], #Munich
-    [210,243,0,2042,1267,2250], #Stuttgart
-    [2219,2253,2042,0,1127,579], #Supplier: Porto
-    [1444,1369,1267,1127,0,996], #Supplier: Barcelona
-    [2428,2354,2250,579,996,0]  #Depot: Seville
+    [0,1700,2100,22190,14440,24280], #Nuremburg
+    [1700,0,2430,22530,13690,23540], #Munich
+    [2100,2430,0,20420,12670,22500], #Stuttgart
+    [22190,22530,20420,0,11270,5790], #Supplier: Porto
+    [14440,13690,12670,11270,0,9960], #Supplier: Barcelona
+    [24280,23540,22500,5790,996,0]  #Depot: Seville
 ]
 
 data['pickups_deliveries'] = []
 for i in TO_list:
     data['pickups_deliveries'].append([i.origin,i.destination])
 
+<<<<<<< HEAD
+data['num_vehicles'] = 6
+data['depot']=2 #set starting point for all vehicles
+data['demands']= [45000,55000,100000,25000,30000,100]
+=======
 data['num_vehicles'] = 5
 data['depot']=5 #set starting point for all vehicles
 data['demands']= [15000, 20000, 10000, 0, 0, 0]
+>>>>>>> 0e580aef0e53833f7786fc16ad05aa9656eb8bd4
 data['vehicle_capacities']= [25000]*data['num_vehicles'] # length must match num_vehicles
 
 manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']),
@@ -95,15 +101,24 @@ routing.AddDimension(
     True,  # start cumul to zero
     'Distance')
 
+<<<<<<< HEAD
+#routing.AddDimensionWithVehicleCapacity(
+#    demand_callback_index,
+#    0,  # null capacity slack
+#    data['vehicle_capacities'],  # vehicle maximum capacities
+#    True,  # start cumul to zero
+#    'Capacity')
+=======
 routing.AddDimensionWithVehicleTransitAndCapacity(
     demand_callback_index,
     0,  # null capacity slack
     data['vehicle_capacities'],  # vehicle maximum capacities
     True,  # start cumul to zero
     'Capacity')
+>>>>>>> 0e580aef0e53833f7786fc16ad05aa9656eb8bd4
 
 distance_dimension = routing.GetDimensionOrDie('Distance')
-distance_dimension.SetGlobalSpanCostCoefficient(100)
+distance_dimension.SetGlobalSpanCostCoefficient(10000)
 
 for request in data['pickups_deliveries']:
         pickup_index = manager.NodeToIndex(request[0])

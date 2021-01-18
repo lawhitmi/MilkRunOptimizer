@@ -32,10 +32,12 @@ model.x = Var(
     within=Binary,
     doc="TO utilizes LTL if (i,1) is 1 or FTL if (i,2) is 1"
 )
-
-
 # Constraints
 
+# TO must have a tariff applied (i.e. must be pickedup and delivered)
+model.Constraint1 = ConstraintList()
+for i in range(1, 1 + len(TO_list)):
+    model.Constraint1.add(expr=model.x[i, 1] + model.x[i, 2] >= 1)
 
 # Objective
 
@@ -56,9 +58,7 @@ def cost_to(to, ltl, ftl):
 
 model.Cost = Objective(rule=cost_func, sense=minimize)
 
-model.Constraint1 = ConstraintList()
-for i in range(1, 1 + len(TO_list)):
-    model.Constraint1.add(expr=model.x[i, 1] + model.x[i, 2] >= 1)
+
 
 # Solve
 
