@@ -87,18 +87,84 @@ def find_to(to_name):
             return to
 
 
+def calc_milkrun_cost(milkrun):
+    if milkrun.type == "neither":
+        result = min(get_tariff_dist(
+            data['distance_matrix'][(next(iter(milkrun.origins)), next(iter(milkrun.destinations)))],
+            milkrun.total_weight()), get_tariff_ftl(
+            data['distance_matrix'][(next(iter(milkrun.origins)), next(iter(milkrun.destinations)))]))
+    else:
+        result = (len(milkrun.origins) + len(milkrun.destinations)) * 200
+    milkrun.cost = result
+    return result
+
+
+total_cost_no_milkrun = tos["cost"].sum()
+
 while len(tos[~tos["considered"]].index) > 0:
     to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
-    tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][0]), "considered"] = True
-    new_milkrun = Milkrun(find_to(to_consider["transportOrder"][0]))
+    tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
+    new_milkrun = Milkrun(find_to(to_consider["transportOrder"][to_consider.index[0]]))
     while True:
-        to_add = tos.query('~milkrun and ~considered and (origin == ' + str(to_consider["origin"][0])
-                           + ' or destination == '
-                           + str(to_consider["destination"][0])
-                           + ') and weight < '
-                           + str(b.max_payload - new_milkrun.total_weight())
-                           + ' and length < '
-                           + str(b.max_length - new_milkrun.total_length())
-                           + ' and volume <'
-                           + str(b.max_vol - new_milkrun.total_volume()))
+        # first consider true milkruns
+        to_add = tos.query(
+            '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
+            + ') != (destination == '
+            + str(to_consider["destination"][to_consider.index[0]])
+            + ')) and weight < '
+            + str(b.max_payload - new_milkrun.total_weight())
+            + ' and length < '
+            + str(b.max_length - new_milkrun.total_length())
+            + ' and volume <'
+            + str(b.max_vol - new_milkrun.total_volume()))
+        old_cost = calc_milkrun_cost(new_milkrun)
+        added = False
+        for add in to_add.index:
+            type_compatible = new_milkrun.add_to(find_to(to_add["transportOrder"][add]))
+            if type_compatible:
+                if calc_milkrun_cost(new_milkrun) < old_cost + to_add["cost"][add]:
+                    added = True
+                    tos.loc[tos["transportOrder"].str.match(
+                        to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
+                    tos.loc[tos["transportOrder"].str.match(to_add["transportOrder"][add]), "milkrun"] = True
+                    tos.loc[tos["transportOrder"].str.match(to_add["transportOrder"][add]), "considered"] = True
+                    break
+                else:
+                    new_milkrun.pop()
+        if added:
+            continue
+        # now consider fake milkruns, i.e. combinations of TO with same OD
+        to_add = tos.query(
+            '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
+            + ') and (destination == '
+            + str(to_consider["destination"][to_consider.index[0]])
+            + ')) and weight < '
+            + str(b.max_payload - new_milkrun.total_weight())
+            + ' and length < '
+            + str(b.max_length - new_milkrun.total_length())
+            + ' and volume <'
+            + str(b.max_vol - new_milkrun.total_volume()))
+        for add in to_add.index:
+            type_compatible = new_milkrun.add_to(find_to(to_add["transportOrder"][add]))
+            if type_compatible:
+                if calc_milkrun_cost(new_milkrun) < old_cost + to_add["cost"][add]:
+                    added = True
+                    tos.loc[tos["transportOrder"].str.match(
+                        to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
+                    tos.loc[tos["transportOrder"].str.match(to_add["transportOrder"][add]), "milkrun"] = True
+                    tos.loc[tos["transportOrder"].str.match(to_add["transportOrder"][add]), "considered"] = True
+                    break
+                else:
+                    new_milkrun.pop()
+        if ~added:
+            if new_milkrun.number_of_tos() > 1:
+                milkrun_list.append(new_milkrun)
+            break
 
+print(tos[~tos["milkrun"]])
+total_cost = tos[~tos["milkrun"]]["cost"].sum()
+for milkrun in milkrun_list:
+    total_cost += milkrun.cost
+    print(str(milkrun) + "\n")
+print("Total cost without milkruns: " + str(total_cost_no_milkrun))
+print("Total cost: " + str(total_cost))
