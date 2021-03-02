@@ -6,6 +6,7 @@ from helper_funcs import *
 import numpy as np
 from MoT import MoT
 from Milkrun import Milkrun
+from itertools import permutations
 
 data = {'distance_matrix': np.array([
     [0, 170, 210, 2219, 1444, 2428],  # Nuremberg
@@ -68,10 +69,14 @@ results.write()
 instance.display()
 instance.solutions.load_from(results)
 
+
+# Build MilkRuns
+
 a = MoT('Standard 25to', 50, 25000, 13.6, 2.5, 2.48)
 b = MoT('MEGA', 70, 25000, 13.62, 2.48, 3)
 c = MoT('PICKUP 3.5t', 60, 3500, 6.4, 2.5, 2.5)
 
+# Build TO list using tariffs chosen from pyomo above
 tos = pd.DataFrame({"transportOrder": [to.order_num for to in TO_list], "origin": [to.origin for to in TO_list],
                     "destination": [to.destination for to in TO_list], "weight": [to.weight for to in TO_list],
                     "length": [to.length for to in TO_list], "volume": [to.volume for to in TO_list],
@@ -82,10 +87,34 @@ milkrun_list = []
 
 
 def find_to(to_name):
+    """Returns the first entry in the list of TOs which matches the passed destination"""
     for to in TO_list:
         if to.order_num == to_name:
             return to
 
+def tsp_dist(milkrun):
+    if milkrun.type == "inbound":
+        perm = permutations(milkrun.origins)
+        min_dist = 1E6
+        for i in perm:
+            dist = data['distance_matrix'][i[0],i[1]]+data['distance_matrix'][i[1],next(iter(milkrun.destinations))]
+            if dist < min_dist:
+                min_dist = dist
+                best = i
+        print('Best Route inbound:', i)
+        return min_dist
+    elif milkrun.type == "outbound":
+        perm = permutations(milkrun.destinations)
+        min_dist = 1E6
+        for i in perm:
+            dist = data['distance_matrix'][next(iter(milkrun.origins)),i[0]]
+            for j in range(len(i)-1):
+                dist += data['distance_matrix'][i[j],i[j+1]]
+            if dist < min_dist:
+                min_dist = dist
+                best = i
+        print('Best Route outbound:', i)
+        return min_dist
 
 def calc_milkrun_cost(milkrun):
     if milkrun.type == "neither":
@@ -94,7 +123,10 @@ def calc_milkrun_cost(milkrun):
             milkrun.total_weight()), get_tariff_ftl(
             data['distance_matrix'][(next(iter(milkrun.origins)), next(iter(milkrun.destinations)))]))
     else:
-        result = (len(milkrun.origins) + len(milkrun.destinations)) * 200
+        #This equation needs to be updated to reflect the actual distance (mini-TSP)
+        dist = tsp_dist(milkrun)
+        num_stops = len(milkrun.origins)+len(milkrun.destinations)-2
+        result = get_tariff_milk(dist, num_stops)
     milkrun.cost = result
     return result
 
