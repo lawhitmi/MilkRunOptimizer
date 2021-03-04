@@ -93,6 +93,10 @@ def find_to(to_name):
             return to
 
 def tsp_dist(milkrun):
+    """
+    Fully enumerates the possibilities for a tour in each case (inbound and outbound) 
+    and returns the shortest distance for use in milkrun tariff calculation.
+    """
     if milkrun.type == "inbound":
         perm = permutations(milkrun.origins)
         min_dist = 1E6
@@ -101,7 +105,6 @@ def tsp_dist(milkrun):
             if dist < min_dist:
                 min_dist = dist
                 best = i
-        print('Best Route inbound:', i)
         return min_dist
     elif milkrun.type == "outbound":
         perm = permutations(milkrun.destinations)
@@ -113,7 +116,6 @@ def tsp_dist(milkrun):
             if dist < min_dist:
                 min_dist = dist
                 best = i
-        print('Best Route outbound:', i)
         return min_dist
 
 def calc_milkrun_cost(milkrun):
@@ -125,7 +127,7 @@ def calc_milkrun_cost(milkrun):
     else:
         #This equation needs to be updated to reflect the actual distance (mini-TSP)
         dist = tsp_dist(milkrun)
-        num_stops = len(milkrun.origins)+len(milkrun.destinations)-2
+        num_stops = len(milkrun.origins)+len(milkrun.destinations)-2 #subtract origin and destination stops
         result = get_tariff_milk(dist, num_stops)
     milkrun.cost = result
     return result

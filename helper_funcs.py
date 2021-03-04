@@ -61,6 +61,16 @@ def get_tariff_dist(weight, dist):
 
     return tariff
 
+def get_tariff_dist_class(milkrun):
+    tariff_levels = pd.read_csv("./Data/LTLTariff.csv", index_col=0)
+    tariff_levels.columns = tariff_levels.columns.astype(float)
+
+    x = tariff_levels.columns[tariff_levels.columns <= milkrun.get_dist()][-1]
+    y = tariff_levels.index[tariff_levels.index <= milkrun.total_weight()][-1]
+
+    tariff = tariff_levels.loc[y, x]
+
+    return tariff
 
 # FTL Tariff
 def get_tariff_ftl(dist):
@@ -69,6 +79,10 @@ def get_tariff_ftl(dist):
     distance_rate = 0.2  # Euro/km
     return transport_cost + (dist * distance_rate)
 
+def get_tariff_ftl_class(milkrun):
+    transport_cost = 50
+    distance_rate = 0.2
+    return transport_cost + milkrun.get_dist() * distance_rate
 
 # Milk Run Tariff
 def get_tariff_milk(dist, num_stops):

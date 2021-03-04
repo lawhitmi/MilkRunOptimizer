@@ -1,4 +1,4 @@
-from numpy import inf
+from numpy import inf, array
 
 
 class Milkrun:
@@ -8,6 +8,13 @@ class Milkrun:
         self.destinations = {to.destination}
         self.type = "neither"
         self.cost = inf
+        self.dist_matrix = array([
+            [0, 170, 210, 2219, 1444, 2428],  # Nuremberg
+            [170, 0, 243, 2253, 1369, 2354],  # Munich
+            [210, 243, 0, 2042, 1267, 2250],  # Stuttgart
+            [2219, 2253, 2042, 0, 1127, 579],  # Supplier Porto
+            [1444, 1369, 1267, 1127, 0, 996]  # Supplier Barcelona
+        ])
 
     def number_of_tos(self):
         return len(self.TOs_covered)
@@ -60,6 +67,10 @@ class Milkrun:
             self.type = "outbound"
         else:
             self.type = "neither"
+
+    def get_dist(self):
+        if len(self.origins)==1 and len(self.destinations)==1:
+            return self.dist_matrix[next(iter(self.origins)),next(iter(self.destinations))]
 
     def __str__(self):
         if self.type == "neither":
