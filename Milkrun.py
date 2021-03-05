@@ -1,4 +1,8 @@
 from numpy import inf, array
+from helper_funcs import *
+from itertools import permutations
+
+LOC_NAME_LOOKUP = {0:'Nuremburg', 1: 'Munich', 2: 'Stuttgart', 3:'Supplier Porto', 4: 'Supplier Barcelona'}
 
 
 class Milkrun:
@@ -15,6 +19,8 @@ class Milkrun:
             [2219, 2253, 2042, 0, 1127, 579],  # Supplier Porto
             [1444, 1369, 1267, 1127, 0, 996]  # Supplier Barcelona
         ])
+        self.tariff_type = ""
+        self.select_tariff()
 
     def number_of_tos(self):
         return len(self.TOs_covered)
@@ -31,6 +37,7 @@ class Milkrun:
         if len(self.destinations) > 1:
             self.type = "outbound"
         self.TOs_covered.append(to)
+        self.select_tariff()
         return True
 
     def total_weight(self):
@@ -67,10 +74,57 @@ class Milkrun:
             self.type = "outbound"
         else:
             self.type = "neither"
+        self.select_tariff()
 
     def get_dist(self):
-        if len(self.origins)==1 and len(self.destinations)==1:
+        """
+        This method returns the distance between the origin and destination in the case of a direct route, otherwise it fully enumerates the 
+        TSP and chooses the shortest distance. In all cases, the best route is set in the tour field.
+        """
+        if self.type == "neither":
+            self.tour = LOC_NAME_LOOKUP[next(iter(self.origins))] + '->' + LOC_NAME_LOOKUP[next(iter(self.destinations))]
             return self.dist_matrix[next(iter(self.origins)),next(iter(self.destinations))]
+        else:
+            if self.type == "inbound":
+                perm = permutations(self.origins)
+                min_dist = 1E6
+                best_route = ()
+                for i in perm:
+                    dist = self.dist_matrix[i[0],i[1]]+self.dist_matrix[i[1],next(iter(self.destinations))]
+                    if dist < min_dist:
+                        min_dist = dist
+                        best_route = (i[0],i[1],next(iter(self.destinations)))
+                self.tour = '->'.join([LOC_NAME_LOOKUP[x] for x in best_route])
+                return min_dist
+            elif self.type == "outbound":
+                perm = permutations(self.destinations)
+                min_dist = 1E6
+                best_route = ()
+                for i in perm:
+                    dist = self.dist_matrix[next(iter(self.origins)),i[0]]
+                    for j in range(len(i)-1):
+                        dist += self.dist_matrix[i[j],i[j+1]]
+                    if dist < min_dist:
+                        min_dist = dist
+                        best_route = tuple(i)
+                self.tour = LOC_NAME_LOOKUP[next(iter(self.origins))] + '->' + '->'.join([LOC_NAME_LOOKUP[x] for x in best_route])
+                return min_dist
+
+
+    def select_tariff(self):
+        if self.type == "neither":
+            ftl_tariff = get_tariff_ftl_class(self)
+            ltl_tariff = get_tariff_dist_class(self)
+            if ltl_tariff < ftl_tariff:
+                self.cost = ltl_tariff
+                self.tariff_type = 'LTL'
+            else:
+                self.cost = ftl_tariff
+                self.tariff_type = 'FTL'
+        elif self.type == "inbound" or self.type == "outbound":
+            milk_tariff = get_tariff_milk_class(self)
+            self.cost = milk_tariff
+            self.tariff_type = 'Milkrun'
 
     def __str__(self):
         if self.type == "neither":

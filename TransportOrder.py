@@ -7,3 +7,6 @@ class Order:
         self.weight = weight
         self.length = length
         self.volume = volume
+
+    def __repr__(self):
+        return self.order_num

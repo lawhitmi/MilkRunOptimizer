@@ -3,6 +3,8 @@ from helper_funcs import *
 from MoT import MoT
 from Milkrun import Milkrun
 
+NUM_SUPPLIERS = 2
+
 TO_list = get_to_list()
 
 # Build MilkRuns
@@ -21,8 +23,8 @@ tos['density'] = tos['weight'] / tos['volume']
 # Sort by various columns to find minimum baseline cost
 # tos = tos.sort_values(by=["weight"], ascending=False)
 # tos = tos.sort_values(by=["length"], ascending=False)
-tos = tos.sort_values(by=["volume"], ascending=False)
-# tos = tos.sort_values(by=["density"], ascending=False)
+# tos = tos.sort_values(by=["volume"], ascending=False)
+tos = tos.sort_values(by=["density"], ascending=False)
 
 milkrun_list = []
 
@@ -33,7 +35,39 @@ def find_to(to_name):
         if to.order_num == to_name:
             return to
 
-# Greedy Knapsack packs trucks with TOs sharing origin/destination (order based on sorting above)
+milkrun_count = 0
+while milkrun_count < NUM_SUPPLIERS:
+    to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
+    tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
+    tos.loc[tos["transportOrder"].str.match(
+                to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
+    new_milkrun = Milkrun(find_to(to_consider["transportOrder"][to_consider.index[0]]))
+    milkrun_list.append(new_milkrun)
+    while True:
+        to_add = tos.query(
+            '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
+            + ') != (destination == '
+            + str(to_consider["destination"][to_consider.index[0]])
+            + ')) and weight < '
+            + str(b.max_payload - new_milkrun.total_weight())
+            + ' and length < '
+            + str(b.max_length - new_milkrun.total_length())
+            + ' and volume <'
+            + str(b.max_vol - new_milkrun.total_volume()))
+        if len(to_add) > 0:
+            type_compatible = new_milkrun.add_to(find_to(to_add.iloc[0]['transportOrder']))
+            if type_compatible:
+                tos.loc[tos["transportOrder"].str.match(to_add.iloc[0]['transportOrder']), "milkrun"] = True
+                tos.loc[tos["transportOrder"].str.match(to_add.iloc[0]['transportOrder']), "considered"] = True
+            else:
+                new_milkrun.pop()
+        else:
+            if new_milkrun.type=="inbound":
+                milkrun_count = NUM_SUPPLIERS
+            elif new_milkrun.type == "outbound":
+                milkrun_count += 1
+            break
+
 while len(tos[~tos["considered"]].index) > 0:
     to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
     tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
@@ -59,18 +93,11 @@ while len(tos[~tos["considered"]].index) > 0:
             tos.loc[tos["transportOrder"].str.match(to_add.iloc[0]['transportOrder']), "considered"] = True
         else:
             break
-        
- 
+
 tot_cost = 0
 for milkrun in milkrun_list:
     tot_cost += milkrun.cost
+print("Total Cost: ", tot_cost)
 
-print('Total Cost: ', tot_cost)
-# by volume : 7441
-# by density : 7881.4
-# by weight : 7881.4
-# by length : 7441
-
-#Print Results
 for i in milkrun_list:
     print(i.type, i.tour, i.tariff_type, i.cost, str([str(x) for x in i.TOs_covered]), i.total_weight(), i.total_volume(), i.total_length())
