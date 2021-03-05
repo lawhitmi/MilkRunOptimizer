@@ -37,23 +37,37 @@ def find_to(to_name):
 
 milkrun_count = 0
 while milkrun_count < NUM_SUPPLIERS:
-    to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
+    # if a milkrun is already created, don't create another originating from same location
+    if len(milkrun_list) > 0:
+        to_consider = tos[~tos["considered"] & ~tos["milkrun"] & (tos["origin"]!=next(iter(milkrun_list[0].origins)))][:1]
+    else:
+        to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
     tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
-    tos.loc[tos["transportOrder"].str.match(
-                to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
+    tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
     new_milkrun = Milkrun(find_to(to_consider["transportOrder"][to_consider.index[0]]))
     milkrun_list.append(new_milkrun)
     while True:
-        to_add = tos.query(
-            '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
-            + ') != (destination == '
-            + str(to_consider["destination"][to_consider.index[0]])
-            + ')) and weight < '
-            + str(b.max_payload - new_milkrun.total_weight())
-            + ' and length < '
-            + str(b.max_length - new_milkrun.total_length())
-            + ' and volume <'
-            + str(b.max_vol - new_milkrun.total_volume()))
+        if len(milkrun_list) > 0:
+            # can't do a inbound in this case, origin must match.
+            to_add = tos.query(
+                '~milkrun and ~considered and (origin == ' + str(to_consider["origin"][to_consider.index[0]])
+                + ') and weight < '
+                + str(b.max_payload - new_milkrun.total_weight())
+                + ' and length < '
+                + str(b.max_length - new_milkrun.total_length())
+                + ' and volume <'
+                + str(b.max_vol - new_milkrun.total_volume()))
+        else:
+            to_add = tos.query(
+                '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
+                + ') != (destination == '
+                + str(to_consider["destination"][to_consider.index[0]])
+                + ')) and weight < '
+                + str(b.max_payload - new_milkrun.total_weight())
+                + ' and length < '
+                + str(b.max_length - new_milkrun.total_length())
+                + ' and volume <'
+                + str(b.max_vol - new_milkrun.total_volume()))
         if len(to_add) > 0:
             type_compatible = new_milkrun.add_to(find_to(to_add.iloc[0]['transportOrder']))
             if type_compatible:
@@ -64,10 +78,11 @@ while milkrun_count < NUM_SUPPLIERS:
         else:
             if new_milkrun.type=="inbound":
                 milkrun_count = NUM_SUPPLIERS
-            elif new_milkrun.type == "outbound":
+            elif new_milkrun.type == "outbound" or new_milkrun.type=="neither": #neither is here to prevent the case where it tries to add a 3rd milkrun if an origin only has TOs with one destination option.
                 milkrun_count += 1
             break
 
+# add the remaining TOs to direct tariff tours (Greedy)
 while len(tos[~tos["considered"]].index) > 0:
     to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
     tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
