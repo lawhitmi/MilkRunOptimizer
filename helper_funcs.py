@@ -8,6 +8,7 @@ def get_to_list():
     # Read in Transport Orders from File
     # Note that the weight for TO-IB-200015 was changed to 15,920 as the other value didn't fit on a truck 
     # and the density of the order was similar to that of a solid block of titanium.
+    # A dummy order was also added originating out of Barcelona so that a second milkrun could be generated. (TO-0160050)
     tos = pd.read_csv("./Data/TransportOrders.csv")
 
     # Clean out units and convert to numeric

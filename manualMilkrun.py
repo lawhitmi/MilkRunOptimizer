@@ -35,6 +35,8 @@ def find_to(to_name):
         if to.order_num == to_name:
             return to
 
+
+# Try to build Milkruns in a Greedy way.
 milkrun_count = 0
 while milkrun_count < NUM_SUPPLIERS:
     # if a milkrun is already created, don't create another originating from same location
@@ -46,6 +48,7 @@ while milkrun_count < NUM_SUPPLIERS:
     tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "milkrun"] = True
     new_milkrun = Milkrun(find_to(to_consider["transportOrder"][to_consider.index[0]]))
     milkrun_list.append(new_milkrun)
+    index_to_use = 0 # this index is to allow the loop below to "skip" TOs that are incompatible.
     while True:
         if len(milkrun_list) > 0:
             # can't do a inbound in this case, origin must match.
@@ -69,12 +72,14 @@ while milkrun_count < NUM_SUPPLIERS:
                 + ' and volume <'
                 + str(b.max_vol - new_milkrun.total_volume()))
         if len(to_add) > 0:
-            type_compatible = new_milkrun.add_to(find_to(to_add.iloc[0]['transportOrder']))
+            type_compatible = new_milkrun.add_to(find_to(to_add.iloc[index_to_use]['transportOrder']))
             if type_compatible:
-                tos.loc[tos["transportOrder"].str.match(to_add.iloc[0]['transportOrder']), "milkrun"] = True
-                tos.loc[tos["transportOrder"].str.match(to_add.iloc[0]['transportOrder']), "considered"] = True
+                tos.loc[tos["transportOrder"].str.match(to_add.iloc[index_to_use]['transportOrder']), "milkrun"] = True
+                tos.loc[tos["transportOrder"].str.match(to_add.iloc[index_to_use]['transportOrder']), "considered"] = True
+                index_to_use = 0
             else:
                 new_milkrun.pop()
+                index_to_use += 1
         else:
             if new_milkrun.type=="inbound":
                 milkrun_count = NUM_SUPPLIERS
@@ -91,7 +96,6 @@ while len(tos[~tos["considered"]].index) > 0:
     new_milkrun = Milkrun(find_to(to_consider["transportOrder"][to_consider.index[0]]))
     milkrun_list.append(new_milkrun)
     while True:
-        added=False
         to_add = tos.query(
             '~milkrun and ~considered and ((origin == ' + str(to_consider["origin"][to_consider.index[0]])
             + ') and (destination == '
@@ -110,9 +114,12 @@ while len(tos[~tos["considered"]].index) > 0:
             break
 
 tot_cost = 0
+assigned_TOs = 0
 for milkrun in milkrun_list:
     tot_cost += milkrun.cost
+    assigned_TOs += len(milkrun.TOs_covered)
 print("Total Cost: ", tot_cost)
+print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
 
 for i in milkrun_list:
     print(i.type, i.tour, i.tariff_type, i.cost, str([str(x) for x in i.TOs_covered]), i.total_weight(), i.total_volume(), i.total_length())

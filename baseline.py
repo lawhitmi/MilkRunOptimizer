@@ -62,14 +62,19 @@ while len(tos[~tos["considered"]].index) > 0:
         
  
 tot_cost = 0
+assigned_TOs = 0
 for milkrun in milkrun_list:
     tot_cost += milkrun.cost
+    assigned_TOs += len(milkrun.TOs_covered)
 
 print('Total Cost: ', tot_cost)
 # by volume : 7441
 # by density : 7881.4
 # by weight : 7881.4
 # by length : 7441
+
+print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
+
 
 #Print Results
 for i in milkrun_list:
