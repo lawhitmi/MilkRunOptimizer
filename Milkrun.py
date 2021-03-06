@@ -10,7 +10,7 @@ class Milkrun:
         self.TOs_covered = [to]
         self.origins = {to.origin}
         self.destinations = {to.destination}
-        self.type = "neither"
+        self.type = "direct"
         self.cost = inf
         self.dist_matrix = array([
             [0, 170, 210, 2219, 1444, 2428],  # Nuremberg
@@ -73,7 +73,7 @@ class Milkrun:
         elif len(self.destinations) > 1:
             self.type = "outbound"
         else:
-            self.type = "neither"
+            self.type = "direct"
         self.select_tariff()
 
     def get_dist(self):
@@ -81,7 +81,7 @@ class Milkrun:
         This method returns the distance between the origin and destination in the case of a direct route, otherwise it fully enumerates the 
         TSP and chooses the shortest distance. In all cases, the best route is set in the tour field.
         """
-        if self.type == "neither":
+        if self.type == "direct":
             self.tour = LOC_NAME_LOOKUP[next(iter(self.origins))] + '->' + LOC_NAME_LOOKUP[next(iter(self.destinations))]
             return self.dist_matrix[next(iter(self.origins)),next(iter(self.destinations))]
         else:
@@ -112,7 +112,7 @@ class Milkrun:
 
 
     def select_tariff(self):
-        if self.type == "neither":
+        if self.type == "direct":
             ftl_tariff = get_tariff_ftl_class(self)
             ltl_tariff = get_tariff_dist_class(self)
             if ltl_tariff < ftl_tariff:
@@ -127,8 +127,8 @@ class Milkrun:
             self.tariff_type = 'Milkrun'
 
     def __str__(self):
-        if self.type == "neither":
-            output = "fake milkrun \n Fusion of runs: "
+        if self.type == "direct":
+            output = "Direct route \n Fusion of runs: "
         else:
             output = self.type + " milkrun \n covering: "
         for to in self.TOs_covered:

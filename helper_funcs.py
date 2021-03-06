@@ -3,7 +3,7 @@ from TransportOrder import Order
 
 
 def get_to_list():
-    """Reads Transport Orders from File, Instantiates and Order for each one, and returns a list of these Orders"""
+    """Reads Transport Orders from File, Instantiates an Order for each one, and returns a list of these Orders"""
 
     # Read in Transport Orders from File
     # Note that the weight for TO-IB-200015 was changed to 15,920 as the other value didn't fit on a truck 
@@ -50,6 +50,7 @@ def get_tariff(weight):
         return tariff
     else:
         return 250
+
 
 
 # LTL Tariff - with distance

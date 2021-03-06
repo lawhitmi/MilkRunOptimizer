@@ -83,7 +83,7 @@ while milkrun_count < NUM_SUPPLIERS:
         else:
             if new_milkrun.type=="inbound":
                 milkrun_count = NUM_SUPPLIERS
-            elif new_milkrun.type == "outbound" or new_milkrun.type=="neither": #neither is here to prevent the case where it tries to add a 3rd milkrun if an origin only has TOs with one destination option.
+            elif new_milkrun.type == "outbound" or new_milkrun.type=="direct": #direct is here to prevent the case where it tries to add a 3rd milkrun if an origin only has TOs with one destination option.
                 milkrun_count += 1
             break
 
