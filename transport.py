@@ -51,12 +51,6 @@ def cost_func(mdl):
     return cost
 
 
-def cost_to(to, ltl, ftl):
-    return ltl * get_tariff_dist(data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])],
-                                 TO_list[to - 1].weight) + ftl * get_tariff_ftl(
-        data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])])
-
-
 model.Cost = Objective(rule=cost_func, sense=minimize)
 
 
@@ -75,6 +69,11 @@ instance.solutions.load_from(results)
 a = MoT('Standard 25to', 50, 25000, 13.6, 2.5, 2.48)
 b = MoT('MEGA', 70, 25000, 13.62, 2.48, 3)
 c = MoT('PICKUP 3.5t', 60, 3500, 6.4, 2.5, 2.5)
+
+def cost_to(to, ltl, ftl):
+    return ltl * get_tariff_dist(data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])],
+                                 TO_list[to - 1].weight) + ftl * get_tariff_ftl(
+        data['distance_matrix'][tuple(data['pickups_deliveries'][to - 1])])
 
 # Build TO list using tariffs chosen from pyomo above
 tos = pd.DataFrame({"transportOrder": [to.order_num for to in TO_list], "origin": [to.origin for to in TO_list],
