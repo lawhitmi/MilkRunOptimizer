@@ -86,7 +86,7 @@ milkrun_list = []
 
 
 def find_to(to_name):
-    """Returns the first entry in the list of TOs which matches the passed destination"""
+    """returns instance from TO_list which matches passed name"""
     for to in TO_list:
         if to.order_num == to_name:
             return to
@@ -118,7 +118,7 @@ def tsp_dist(milkrun):
         return min_dist
 
 def calc_milkrun_cost(milkrun):
-    if milkrun.type == "neither":
+    if milkrun.type == "direct":
         result = min(get_tariff_dist(
             data['distance_matrix'][(next(iter(milkrun.origins)), next(iter(milkrun.destinations)))],
             milkrun.total_weight()), get_tariff_ftl(

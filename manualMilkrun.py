@@ -113,13 +113,4 @@ while len(tos[~tos["considered"]].index) > 0:
         else:
             break
 
-tot_cost = 0
-assigned_TOs = 0
-for milkrun in milkrun_list:
-    tot_cost += milkrun.cost
-    assigned_TOs += len(milkrun.TOs_covered)
-print("Total Cost: ", tot_cost)
-print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
-
-for i in milkrun_list:
-    print(i.type, i.tour, i.tariff_type, i.cost, str([str(x) for x in i.TOs_covered]), i.total_weight(), i.total_volume(), i.total_length())
+print_results(milkrun_list, TO_list)

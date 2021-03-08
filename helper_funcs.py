@@ -1,6 +1,19 @@
 import pandas as pd
 from TransportOrder import Order
 
+def print_results(milkrun_list,TO_list):
+    tot_cost = 0
+    assigned_TOs = 0
+    for milkrun in milkrun_list:
+        tot_cost += milkrun.cost
+        assigned_TOs += len(milkrun.TOs_covered)
+
+    print('Total Cost: ', tot_cost)
+    print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
+
+    for i in milkrun_list:
+        print(i.type, i.tour, i.tariff_type, i.cost, str([str(x) for x in i.TOs_covered]), i.total_weight(), i.total_volume(), i.total_length())
+
 
 def get_to_list():
     """Reads Transport Orders from File, Instantiates an Order for each one, and returns a list of these Orders"""
@@ -80,8 +93,8 @@ def get_tariff_dist_class(milkrun):
 def get_tariff_ftl(dist):
     transport_cost = 50
     transport_time = 0  # will need to be updated if this comes into play
-    distance_rate = 0.2  # Euro/km original value
-    
+    # distance_rate = 0.2  # Euro/km original value
+    distance_rate = 0.5
     return transport_cost + (dist * distance_rate)
 
 def get_tariff_ftl_class(milkrun):

@@ -1,6 +1,7 @@
 from numpy import inf, array
 from helper_funcs import *
 from itertools import permutations
+from MoT import MoT
 
 LOC_NAME_LOOKUP = {0:'Nuremburg', 1: 'Munich', 2: 'Stuttgart', 3:'Supplier Porto', 4: 'Supplier Barcelona'}
 
@@ -141,3 +142,14 @@ class Milkrun:
             output += str(destination) + " "
         output += "\n cost: " + str(self.cost)
         return output
+
+    def __add__(self,other):
+        truck = MoT('MEGA', 70, 25000, 13.62, 2.48, 3)
+        if self.total_weight() + other.total_weight() > truck.max_payload:
+            return False
+        elif self.total_volume() + other.total_volume() > truck.max_vol:
+            return False
+        elif self.total_length() + other.total_weight() > truck.max_length:
+            return False
+        else:
+            return True
