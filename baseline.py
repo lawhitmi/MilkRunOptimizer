@@ -5,8 +5,6 @@ from Milkrun import Milkrun
 
 TO_list = get_to_list()
 
-# Build MilkRuns
-
 # a = MoT('Standard 25to', 50, 25000, 13.6, 2.5, 2.48)
 b = MoT('MEGA', 70, 25000, 13.62, 2.48, 3)
 # c = MoT('PICKUP 3.5t', 60, 3500, 6.4, 2.5, 2.5)
@@ -24,8 +22,11 @@ tos['density'] = tos['weight'] / tos['volume']
 tos = tos.sort_values(by=["volume"], ascending=False)
 # tos = tos.sort_values(by=["density"], ascending=False)
 
-milkrun_list = []
+trucks_by_weight = (tos['weight'].sum()) / b.max_payload # 9
+trucks_by_length = (tos['length'].sum()) / b.max_length # 13
+trucks_by_volume = (tos['volume'].sum()) / b.max_vol # 8
 
+milkrun_list = []
 
 def find_to(to_name):
     """Returns the first entry in the list of TOs which matches the passed destination"""
