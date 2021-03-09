@@ -115,10 +115,15 @@ class Milkrun:
     def select_tariff(self):
         if self.type == "direct":
             ftl_tariff = get_tariff_ftl_class(self)
-            ltl_tariff = get_tariff_dist_class(self)
-            if ltl_tariff < ftl_tariff:
-                self.cost = ltl_tariff
-                self.tariff_type = 'LTL'
+            ltl1_tariff = get_tariff_class(self)
+            ltl2_tariff = get_tariff_dist_class(self)
+            min_tariff = min([ftl_tariff,ltl1_tariff,ltl2_tariff])
+            if min_tariff == ltl1_tariff:
+                self.cost = ltl1_tariff
+                self.tariff_type = 'LTL1'
+            elif min_tariff == ltl2_tariff:
+                self.cost = ltl2_tariff
+                self.tariff_type = 'LTL2'
             else:
                 self.cost = ftl_tariff
                 self.tariff_type = 'FTL'

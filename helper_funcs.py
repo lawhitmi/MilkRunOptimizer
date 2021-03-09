@@ -64,6 +64,25 @@ def get_tariff(weight):
     else:
         return 250
 
+def get_tariff_class(milkrun):
+    tariff_levels = pd.Series({1.79: 0,
+                               1.70: 201,
+                               1.62: 501,
+                               1.53: 1001,
+                               1.46: 1501,
+                               1.38: 2001,
+                               1.32: 3001,
+                               1.25: 4001,
+                               1.19: 5001,
+                               1.13: 7501,
+                               1.07: 10001})
+    cost = tariff_levels[tariff_levels <= milkrun.total_weight()].index[-1]
+
+    tariff = cost * milkrun.total_weight()
+    if tariff >= 250:
+        return tariff
+    else: 
+        return 250
 
 
 # LTL Tariff - with distance

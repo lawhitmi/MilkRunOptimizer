@@ -36,7 +36,6 @@ def bin_packing(TO_list, dist):
     tours = list(range(10)) # 20 is just a high estimate for # trucks required
     # transport_orders = list(range(len(TO_list)))
     model.transport_orders = RangeSet(0,len(TO_list)-1)
-    tariffs = list(range(3)) # 3 number of tariffs considered (0: LTL, 1: FTL, 2: Milkrun)
 
 
     # Variables
