@@ -201,3 +201,5 @@ for milkrun in milkrun_list:
     print(str(milkrun) + "\n")
 print("Total cost without milkruns: " + str(total_cost_no_milkrun))
 print("Total cost: " + str(total_cost))
+
+print_results(milkrun_list, TO_list)

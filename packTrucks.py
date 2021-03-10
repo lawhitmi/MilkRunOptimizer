@@ -120,20 +120,25 @@ print_results(milkrun_list,TO_list)
 
 
 # Attempt to combine runs with the most remaining margin in truck (Milkruns)
-tours = pd.DataFrame({"Tour": [i for i in range(len(milkrun_list))], "origin": [next(iter(to.origins)) for to in milkrun_list],
-                    "destination": [next(iter(to.destinations)) for to in milkrun_list], "weight": [i.total_weight() for i in milkrun_list],
-                    "length": [i.total_length() for i in milkrun_list], "volume": [i.total_volume() for i in milkrun_list]})
-tours['rem_weight'] = (b.max_payload - tours['weight'])/b.max_payload
-tours['rem_vol'] = (b.max_vol - tours['volume'])/b.max_vol
-tours['rem_len'] = (b.max_length - tours['length'])/b.max_length
-tours['avg_rem'] = sum((tours['rem_weight'],tours['rem_vol'], tours['rem_len']))/3
-tours = tours.sort_values(by=['avg_rem'],ascending=False)
+# tours = pd.DataFrame({"Tour": [i for i in range(len(milkrun_list))], "origin": [next(iter(to.origins)) for to in milkrun_list],
+#                     "destination": [next(iter(to.destinations)) for to in milkrun_list], "weight": [i.total_weight() for i in milkrun_list],
+#                     "length": [i.total_length() for i in milkrun_list], "volume": [i.total_volume() for i in milkrun_list]})
+# tours['rem_weight'] = (b.max_payload - tours['weight'])/b.max_payload
+# tours['rem_vol'] = (b.max_vol - tours['volume'])/b.max_vol
+# tours['rem_len'] = (b.max_length - tours['length'])/b.max_length
+# tours['avg_rem'] = sum((tours['rem_weight'],tours['rem_vol'], tours['rem_len']))/3
+# tours = tours.sort_values(by=['avg_rem'],ascending=False)
 
-index0 = int(tours.iloc[0]['Tour'])
-index1 = int(tours.iloc[1]['Tour'])
-if milkrun_list[index0] + milkrun_list[index1]:
-    for i in milkrun_list[index0].TOs_covered:
-        milkrun_list[index1].add_to(i)
-    milkrun_list.pop(index0)
+# index0 = int(tours.iloc[0]['Tour'])
+# index1 = int(tours.iloc[1]['Tour'])
+# if milkrun_list[index0] + milkrun_list[index1]:
+#     for i in milkrun_list[index0].TOs_covered:
+#         milkrun_list[index1].add_to(i)
+#     milkrun_list.pop(index0)
+
+for i in range(len(milkrun_list)):
+    for j in range(len(milkrun_list)):
+        if j != i and milkrun_list[i]+milkrun_list[j]:
+            print(str(i), str(j))
 
 print_results(milkrun_list,TO_list)

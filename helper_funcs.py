@@ -12,7 +12,7 @@ def print_results(milkrun_list,TO_list):
     print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
 
     for i in milkrun_list:
-        print(i.type, i.tour, i.tariff_type, i.cost, str([str(x) for x in i.TOs_covered]), i.total_weight(), i.total_volume(), i.total_length())
+        print(i.type, i.tour, i.tariff_type, round(i.cost,2), str([str(x) for x in i.TOs_covered]), round(i.total_weight(),2), round(i.total_volume(),2), round(i.total_length(),2))
 
 
 def get_to_list():
@@ -110,33 +110,39 @@ def get_tariff_dist_class(milkrun):
 
 # FTL Tariff
 def get_tariff_ftl(dist):
+    speed = 70.0 # avg speed of MEGA truck
     transport_cost = 50
-    transport_time = 0  # will need to be updated if this comes into play
-    # distance_rate = 0.2  # Euro/km original value
-    distance_rate = 0.5
-    return transport_cost + (dist * distance_rate)
+    time_rate = 2.0  
+    distance_rate = 0.2  # Euro/km original value
+    # distance_rate = 0.5
+    return transport_cost + (dist * distance_rate) + time_rate * (dist/speed)
 
 def get_tariff_ftl_class(milkrun):
+    speed = 70.0 # avg speed of MEGA truck
     transport_cost = 50
-    # distance_rate = 0.2 # original value
-    distance_rate = 0.5 #to make milkrun more viable
-    return transport_cost + milkrun.get_dist() * distance_rate
+    time_rate = 2.0
+    distance_rate = 0.2 # original value
+    # distance_rate = 0.5 #to make milkrun more viable
+    return transport_cost + (milkrun.get_dist() * distance_rate) + (time_rate *(milkrun.get_dist()/speed))
 
 # Milk Run Tariff
 def get_tariff_milk(dist, num_stops):
+    speed = 70.0 # avg speed of MEGA truck
     transport_cost = 100
-    transport_time = 0  # will need to be updated if this comes into play
+    time_rate = 2.0
     distance_rate = 0.6
     stop_cost = 40
-    return transport_cost + distance_rate * dist + num_stops * stop_cost
+    return transport_cost + (distance_rate * dist) + (num_stops * stop_cost) + (time_rate * (dist/speed)) 
 
 def get_tariff_milk_class(milkrun):
-    # transport_cost = 100 #original value
-    transport_cost = 50 #try lower value to make milkrun viable
-    # distance_rate = 0.6 # original value
-    distance_rate = 0.2 #try lower value to make milkrun viable
+    speed = 70.0 # avg speed of MEGA truck
+    transport_cost = 100 #original value
+    # transport_cost = 50 #try lower value to make milkrun viable
+    time_rate = 2.0
+    distance_rate = 0.6 # original value
+    # distance_rate = 0.2 #try lower value to make milkrun viable
     stop_cost = 40
-    return transport_cost + distance_rate * milkrun.get_dist() + (len(milkrun.origins)+len(milkrun.destinations)-2) * stop_cost
+    return transport_cost + (distance_rate * milkrun.get_dist()) + ((len(milkrun.origins)+len(milkrun.destinations)-2) * stop_cost) + (time_rate * (milkrun.get_dist()/speed))
 
 # Running the script runs tests on the functions (using original values)
 if __name__ == "__main__":

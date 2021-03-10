@@ -34,7 +34,7 @@ def find_to(to_name):
         if to.order_num == to_name:
             return to
 
-# Greedy Knapsack packs trucks with TOs sharing origin/destination (order based on sorting above)
+# Greedy Bin Packing packs trucks with TOs sharing origin/destination (order based on sorting above)
 while len(tos[~tos["considered"]].index) > 0:
     to_consider = tos[~tos["considered"] & ~tos["milkrun"]][:1]
     tos.loc[tos["transportOrder"].str.match(to_consider["transportOrder"][to_consider.index[0]]), "considered"] = True
