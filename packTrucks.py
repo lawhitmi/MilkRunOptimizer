@@ -116,7 +116,7 @@ for i in set(data['pickups_deliveries'][:,0]):
                     milkrun_list.append(create_milkrun(to_add))
 
 
-print_results(milkrun_list,TO_list)
+print_results(milkrun_list,TO_list,'optBinPacking.csv')
 
 
 # Attempt to combine runs with the most remaining margin in truck (Milkruns)
@@ -136,9 +136,13 @@ print_results(milkrun_list,TO_list)
 #         milkrun_list[index1].add_to(i)
 #     milkrun_list.pop(index0)
 
+# Attempt to join runs (note that there is no inbound/outbound check here)
 for i in range(len(milkrun_list)):
     for j in range(len(milkrun_list)):
         if j != i and milkrun_list[i]+milkrun_list[j]:
-            print(str(i), str(j))
+            print('Joining: ',str(i), str(j))
+            for to in milkrun_list[i].TOs_covered:
+                milkrun_list[j].add_to(to)
+            milkrun_list.pop(i)
 
-print_results(milkrun_list,TO_list)
+print_results(milkrun_list,TO_list,'optBinPackingwMilkruns.csv')

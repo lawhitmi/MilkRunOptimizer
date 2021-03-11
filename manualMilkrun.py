@@ -23,8 +23,8 @@ tos['density'] = tos['weight'] / tos['volume']
 # Sort by various columns to find minimum baseline cost
 # tos = tos.sort_values(by=["weight"], ascending=False)
 # tos = tos.sort_values(by=["length"], ascending=False)
-# tos = tos.sort_values(by=["volume"], ascending=False)
-tos = tos.sort_values(by=["density"], ascending=False)
+tos = tos.sort_values(by=["volume"], ascending=False)
+# tos = tos.sort_values(by=["density"], ascending=False)
 
 milkrun_list = []
 
@@ -113,4 +113,4 @@ while len(tos[~tos["considered"]].index) > 0:
         else:
             break
 
-print_results(milkrun_list, TO_list)
+print_results(milkrun_list, TO_list,'milkrunFFD.csv')

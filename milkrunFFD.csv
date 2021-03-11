@@ -1,0 +1,18 @@
+Type,Tour,Tariff Type,Cost,TOs,Tot Weight,Tot Vol,Tot Length
+outbound,Supplier Porto->Nuremburg->Munich,Milkrun,1641.66,"['TO-IB-200008', 'TO-IB-180033']",20921.0,67.1,13.59
+direct,Supplier Barcelona->Nuremburg,FTL,380.06,"['TO-IB-200021', 'TO-IB-180032', 'TO-0160021']",12850.0,34.08,13.0
+direct,Supplier Porto->Nuremburg,FTL,557.2,"['TO-IB-200001', 'TO-IB-200022']",22277.0,64.63,13.6
+direct,Supplier Porto->Nuremburg,FTL,557.2,"['TO-0160001', 'TO-IB-180031', 'TO-0160022', 'TO-0160004']",7807.0,60.85,12.6
+direct,Supplier Porto->Stuttgart,FTL,516.74,"['TO-IB-200034', 'TO-IB-180038', 'TO-0160032']",10499.0,65.74,13.62
+direct,Supplier Porto->Stuttgart,FTL,516.74,"['TO-IB-200016', 'TO-0160016', 'TO-0160014']",3012.0,63.19,13.42
+direct,Supplier Porto->Nuremburg,FTL,557.2,['TO-IB-200004'],12750.0,46.56,10.0
+direct,Supplier Porto->Nuremburg,FTL,557.2,['TO-IB-200019'],2177.0,45.93,9.6
+direct,Supplier Porto->Munich,FTL,564.97,"['TO-IB-200010', 'TO-0160008', 'TO-0160028', 'TO-0160010']",24987.0,58.36,12.26
+direct,Supplier Porto->Stuttgart,FTL,516.74,"['TO-IB-200015', 'TO-0160034', 'TO-IB-180035', 'TO-IB-200032', 'TO-IB-200033']",24639.0,62.08,13.02
+direct,Supplier Porto->Nuremburg,FTL,557.2,"['TO-0160019', 'TO-0160037']",1897.0,44.78,11.38
+direct,Supplier Porto->Stuttgart,FTL,516.74,"['TO-IB-200014', 'TO-IB-180039']",24338.0,40.06,8.06
+direct,Supplier Barcelona->Nuremburg,FTL,380.06,"['TO-IB-200003', 'TO-0160003']",7500.0,28.8,12.0
+direct,Supplier Porto->Munich,FTL,564.97,"['TO-IB-180041', 'TO-IB-200026', 'TO-0160026', 'TO-IB-180042']",21292.0,64.09,12.92
+direct,Supplier Porto->Munich,FTL,564.97,"['TO-IB-200028', 'TO-IB-180040']",10120.0,34.66,7.2
+direct,Supplier Porto->Stuttgart,FTL,516.74,"['TO-IB-180036', 'TO-0160033', 'TO-0160015']",6996.0,12.17,2.4
+direct,Supplier Barcelona->Stuttgart,FTL,339.6,['TO-0160050'],2500.0,1.86,1.7

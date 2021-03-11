@@ -156,5 +156,7 @@ class Milkrun:
             return False
         elif self.total_length() + other.total_weight() > truck.max_length:
             return False
+        elif self.origins != other.origins and self.destinations != other.destinations:
+            return False
         else:
             return True

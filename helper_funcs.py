@@ -1,7 +1,7 @@
 import pandas as pd
 from TransportOrder import Order
 
-def print_results(milkrun_list,TO_list):
+def print_results(milkrun_list,TO_list,filename):
     tot_cost = 0
     assigned_TOs = 0
     for milkrun in milkrun_list:
@@ -11,8 +11,14 @@ def print_results(milkrun_list,TO_list):
     print('Total Cost: ', tot_cost)
     print("Assigned Transport Orders: "+ str(assigned_TOs) + '/' + str(len(TO_list)))
 
+    results = []
     for i in milkrun_list:
         print(i.type, i.tour, i.tariff_type, round(i.cost,2), str([str(x) for x in i.TOs_covered]), round(i.total_weight(),2), round(i.total_volume(),2), round(i.total_length(),2))
+        results.append([i.type, i.tour, i.tariff_type, round(i.cost,2), str([str(x) for x in i.TOs_covered]), round(i.total_weight(),2), round(i.total_volume(),2), round(i.total_length(),2)])
+    
+    res_df = pd.DataFrame(results, columns=['Type', 'Tour', 'Tariff Type', 'Cost', 'TOs', 'Tot Weight', 'Tot Vol', 'Tot Length'])
+    res_df.to_csv(filename, index=False)
+
 
 
 def get_to_list():
