@@ -24,6 +24,7 @@ for i in TO_list:
     data['pickups_deliveries'].append([i.origin, i.destination])
 
 data['pickups_deliveries'] = np.array(data['pickups_deliveries'])
+
 model = ConcreteModel()
 
 # Sets
@@ -38,8 +39,14 @@ model.x = Var(tours, model.transport_orders, domain=Binary, initialize=0)
 model.y = Var(tours, tariffs, domain=Binary, initialize=0)
 
 # Params
-model.orig = Param(model.transport_orders, initialize = data['pickups_deliveries'][:,0])
-model.dest = Param(model.transport_orders, initialize = data['pickups_deliveries'][:,1])
+def orig_init(model, i):
+    return data['pickups_deliveries'][:,0][i]
+
+def dest_init(model, i):
+    return data['pickups_deliveries'][:,1][i]
+
+model.orig = Param(model.transport_orders, initialize = orig_init)
+model.dest = Param(model.transport_orders, initialize = dest_init)
 
 # Constraints  
 
@@ -66,8 +73,8 @@ for w in tours:
 model.direct_orig = ConstraintList()
 model.direct_dest = ConstraintList()
 for w in tours:
-    model.direct_orig.add(len(set([model.orig[to] for to in model.transport_orders if value(model.x[w,to]) == 1])) <= 1)
-    model.direct_orig.add(len(set([model.dest[to] for to in model.transport_orders if value(model.x[w,to]) == 1])) <= 1)
+    model.direct_orig.add(sum([model.orig[to] for to in model.transport_orders]) <= 1)
+    model.direct_dest.add(sum([model.dest[to] for to in model.transport_orders if model.x[w,to] == 1]) <= 1)
 
 
 # Objective
@@ -94,10 +101,10 @@ for w in tours:
 # Cost function allowing pyomo to choose tariff
 def cost_func(mdl):
     cost = 0
-    for i in range(1, 1 + len(TO_list)):
+    for i in range(len(tours)):
         cost += mdl.y[i, 0] * get_tariff_dist(data['distance_matrix'][tuple(data['pickups_deliveries'][i - 1])],
-                                              TO_list[i - 1].weight) + mdl.x[i, 1] * get_tariff_ftl(
-            data['distance_matrix'][tuple(data['pickups_deliveries'][i - 1])])
+                                              sum([value(model.x[i,to])*TO_list[to].weight for to in model.transport_orders])) + mdl.y[i, 1] * get_tariff_ftl(
+            data['distance_matrix'][tuple(data['pickups_deliveries'][i - 1])]) + mdl.y[i,2]*1e6
     return cost
 
 model.Cost = Objective(rule=cost_func, sense=minimize)
@@ -116,7 +123,7 @@ instance.solutions.load_from(results)
 milkrun_list=[]
 for w in tours:
     to_add = []
-    for to in transport_orders:
+    for to in model.transport_orders:
         if instance.x[(w,to)] == 1:
             to_add.append(TO_list[to])
     if len(to_add) > 0:
